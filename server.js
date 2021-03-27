@@ -38,8 +38,13 @@ app.post("/api/exercise/new-user",async(req,res)=>{
 });
 
 //GET getting all users
-app.get("/api/exercise/users", (req,res)=>{
-	res.send("Send array with objects containing username and _id property")
+app.get("/api/exercise/users", async(req,res)=>{
+	try{
+		let foundUsers = await User.find();
+		res.status(200).json(foundUsers);
+	} catch(error){
+		res.json({error:error.message})
+	}
 });
 
 //POST add exercise
