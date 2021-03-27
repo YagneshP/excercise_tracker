@@ -7,11 +7,11 @@ const excerciseSchema = new mongoose.Schema({
 	},
 	description:{
 		type: String,
-		required
+		required:true
 	},
 	duration:{
 		type:Number,
-		required
+		required:true
 	},
 	date:{
 		type:Date,
