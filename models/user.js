@@ -4,7 +4,7 @@ const Excercise = require("./excercise");
 const userSchema = new mongoose.Schema({
 	username:{
 		type:String,
-		required
+		required:true
 	},
 	log:[{type:mongoose.Schema.Types.ObjectId,ref:"Excercise"}]
 });
