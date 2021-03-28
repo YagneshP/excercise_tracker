@@ -1,12 +1,30 @@
 const mongoose = require("mongoose");
-const Excercise = require("./excercise");
+// const Excercise = require("./excercise");
+const excerciseSchema = new mongoose.Schema({
+	// userId:{
+	// 	type: mongoose.Schema.Types.ObjectId,
+	// 	ref:"User"
+	// },
+	description:{
+		type: String,
+		required:true
+	},
+	duration:{
+		type:Number,
+		required:true
+	},
+	date:{
+		type:Date,
+		default: Date.now
+	}
+});
 
 const userSchema = new mongoose.Schema({
 	username:{
 		type:String,
 		required:true
 	},
-	log:[{type:mongoose.Schema.Types.ObjectId,ref:"Excercise"}]
+	log:[excerciseSchema]
 });
 
 const user = mongoose.model("User", userSchema);
