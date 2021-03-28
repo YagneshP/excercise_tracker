@@ -4,7 +4,7 @@ const cors = require('cors')
 require('dotenv').config()
 const mongoose = require("mongoose")
 const User = require("./models/user")
-// const Excercise = require("./models/excercise")
+
 
 app.use(cors())
 app.use(express.static('public'))
@@ -56,7 +56,7 @@ app.post("/api/exercise/add",async(req,res)=>{
 		let foundUser = await User.findByIdAndUpdate(userId, {$push:{log:{
 			userId,
 			description,
-			date,
+			date: date?date:Date.now,
 			duration
 		}}});
 		if(foundUser){
