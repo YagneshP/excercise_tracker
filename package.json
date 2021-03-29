@@ -5,12 +5,13 @@
 	"main": "server.js",
 	"scripts": {
 		"start": "node server.js",
-		"dev":"nodemon server.js"
+		"dev": "nodemon server.js"
 	},
 	"dependencies": {
 		"cors": "^2.8.5",
 		"dotenv": "^8.2.0",
 		"express": "^4.16.4",
+		"moment": "^2.29.1",
 		"mongoose": "^5.12.2"
 	},
 	"repository": {

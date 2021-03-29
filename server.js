@@ -74,9 +74,39 @@ app.get("/api/exercise/log",async(req,res)=>{   // from to date in yyyy-mm-dd fo
 		let from = moment(req.query.from).toDate();
     let to = moment(req.query.to ).toDate();
 		let foundUser = await User.aggregate( [{$match: { _id: mongoose.Types.ObjectId(req.query.userId)}},
-																					 {$unwind: "$log"},
-																					 {$match: {"log.date":{$gte:from,$lte:to}}},
-																					 {$group:{'_id':'$_id','username':{"$first":'$username'},'from':{"$first":from},'to':{"$first":to},'log':{$push:'$log'}}}]) //
+																					//  {$unwind: "$log"},
+																					 {
+																						 $addFields: {
+																						        log: {
+																						            $filter: {
+																						                input: "$log",
+																						                cond: {
+																						                   $and: [
+																						                      { $gte: [ "$$this.date", from ] },
+																					                      { $lte: [ "$$this.date", to] }
+																						                   ]
+																						               }
+																						             }
+																						          },
+																										count:{
+																											$size: {
+																													$filter: {
+																															input: "$log",
+																															as:"item",
+																															cond: {
+																																 $and: [
+																																		{ $gte: [ "$$item.date", from ] },
+																																	{ $lte: [ "$$item.date", to] }
+																																 ]
+																														 }
+																													 }
+																										}
+																									}
+																						    }
+																						 },
+																					// {$match: {"log.date":{$gte:from,$lte:to}}},
+																					 {$group:{'_id':'$_id','username':{"$first":'$username'},'from':{"$first":from},'to':{"$first":to},'log':{"$first":'$log'},'count':{'$first':"$count"}}}
+																					]) 
 
 		if(foundUser.length > 0){
 			console.log("found user", foundUser)
