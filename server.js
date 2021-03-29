@@ -4,7 +4,7 @@ const cors = require('cors')
 require('dotenv').config()
 const mongoose = require("mongoose")
 const User = require("./models/user")
-
+const moment = require("moment");
 
 app.use(cors())
 app.use(express.static('public'))
@@ -52,11 +52,10 @@ app.get("/api/exercise/users", async(req,res)=>{
 app.post("/api/exercise/add",async(req,res)=>{
 	try{
 		const{userId, description, date, duration} = req.body
-	
 		let foundUser = await User.findByIdAndUpdate(userId, {$push:{log:{
 			userId,
 			description,
-			date: date?date:Date.now,
+			date: date?moment(date):moment(),
 			duration
 		}}});
 		if(foundUser){
@@ -70,8 +69,24 @@ app.post("/api/exercise/add",async(req,res)=>{
 })
 
 //GET full exercise log of user 
-app.get("/api/exercise/log/:user_id",(req,res)=>{   // from to date in yyyy-mm-dd format and limit
-	res.send("User with log array with description duration and date also a count property")
+app.get("/api/exercise/log",async(req,res)=>{   // from to date in yyyy-mm-dd format and limit
+	try{
+		let from = moment(req.query.from).toDate();
+    let to = moment(req.query.to ).toDate();
+		let foundUser = await User.aggregate( [{$match: { _id: mongoose.Types.ObjectId(req.query.userId)}},
+																					 {$unwind: "$log"},
+																					 {$match: {"log.date":{$gte:from,$lte:to}}},
+																					 {$group:{'_id':'$_id','username':{"$first":'$username'},'from':{"$first":from},'to':{"$first":to},'log':{$push:'$log'}}}]) //
+
+		if(foundUser.length > 0){
+			console.log("found user", foundUser)
+			res.json(foundUser[0])
+		} else{
+			throw new Error("User not found")
+		}
+	}catch(error){
+		res.json({error: error.message})
+	}
 })
 
 
