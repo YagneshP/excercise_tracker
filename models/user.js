@@ -1,26 +1,25 @@
 const mongoose = require("mongoose");
 const moment = require("moment");
 const excerciseSchema = new mongoose.Schema({
-
-	description:{
-		type: String,
-		required:true
-	},
-	duration:{
-		type:Number,
-		required:true
-	},
-	date:{
-		type:Date
-	}
+  description: {
+    type: String,
+    required: true,
+  },
+  duration: {
+    type: Number,
+    required: true,
+  },
+  date: {
+    type: Date,
+  },
 });
 
 const userSchema = new mongoose.Schema({
-	username:{
-		type:String,
-		required:true
-	},
-	log:[excerciseSchema]
+  username: {
+    type: String,
+    required: true,
+  },
+  log: [excerciseSchema],
 });
 
 const user = mongoose.model("User", userSchema);
