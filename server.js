@@ -81,8 +81,10 @@ app.post("/api/exercise/add", async (req, res) => {
 app.get("/api/exercise/log", async (req, res) => {
   // from to date in yyyy-mm-dd format and limit
   try {
-    let from = moment(req.query.from).toDate();
-    let to = moment(req.query.to).toDate();
+		let from
+		let to 
+    req.query.from ? from = moment(req.query.from).toDate() : null;
+   	req.query.to ? to= moment(req.query.to).toDate():null;
     let foundUser = await User.aggregate([
       { $match: { _id: mongoose.Types.ObjectId(req.query.userId) } },
       {
@@ -114,16 +116,16 @@ app.get("/api/exercise/log", async (req, res) => {
           },
         },
       },
-      {
-        $group: {
-          _id: "$_id",
-          username: { $first: "$username" },
-          from: { $first: from },
-          to: { $first: to },
-          log: { $first: "$log" },
-          count: { $first: "$count" },
-        },
-      },
+			{
+				$project:{
+					_id:1,
+					username:1,
+					from:{$cond:{if:from,then:moment(from).format("ddd MMM D YYYY"),else:'$$REMOVE'}},
+					to:{$cond:{if:to,then:moment(from).format("ddd MMM D YYYY"),else:'$$REMOVE'}},
+					log:1,
+					count:1
+				}
+			}
     ]);
 
     if (foundUser.length > 0) {
