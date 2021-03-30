@@ -47,12 +47,12 @@ app.post("/api/exercise/new-user", async (req, res) => {
 //GET getting all users
 app.get("/api/exercise/users", async (req, res) => {
   try {
-    let foundUsers = await User.find().select("-__v").lean();
-		foundUsers = foundUsers.map(user => {
-			return {...user,log:user.log.map(log =>{
-				return {...log, date:moment(log.date).format("ddd MMM D YYYY") }
-			})}
-			})
+    let foundUsers = await User.find().select("-log").lean();
+		// foundUsers = foundUsers.map(user => {
+		// 	return {...user,log:user.log.map(log =>{
+		// 		return {...log, date:moment(log.date).format("ddd MMM D YYYY") }
+		// 	})}
+		// 	})
     res.status(200).json(foundUsers);
   } catch (error) {
     res.json({ error: error.message });
@@ -66,19 +66,19 @@ app.post("/api/exercise/add", async (req, res) => {
 		let newExercise = {
 			_id:userId,
 			description,
-			date: date ? moment(date).format("ddd MMM D YYYY") : moment().format("ddd MMM D YYYY"),
+			date: date ? moment(date) : moment(),
 			duration:+duration,
 		}
     let updatedUser = await User.findByIdAndUpdate(userId, {
       $push: {
         log: newExercise,
       },
-    }).select("-__v").lean();
+    },{new: true}).select("-__v -log").lean();
     if (updatedUser) {
-			newExercise = {...newExercise,username:updatedUser.username,date:moment(newExercise.date).format("ddd MMM D YYYY")}
-		// updatedUser = {...updatedUser,log:updatedUser.log.map(log => {return {...log,date:moment(log.date).format("ddd MMM D YYYY")}})}
-		console.log(newExercise)
-			return res.status(200).json(newExercise);
+			newExercise = {...newExercise,date:moment(newExercise.date).format("ddd MMM D YYYY")}
+		updatedUser = {...updatedUser,...newExercise}
+		console.log(updatedUser)
+			return res.status(200).json(updatedUser);
     } else {
       throw Error("User not found");
     }
