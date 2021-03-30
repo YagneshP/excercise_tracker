@@ -6,7 +6,6 @@ const mongoose = require("mongoose");
 const User = require("./models/user");
 const moment = require("moment");
 
-
 app.use(cors());
 app.use(express.static("public"));
 app.use(express.json());
@@ -58,27 +57,38 @@ app.get("/api/exercise/users", async (req, res) => {
 app.post("/api/exercise/add", async (req, res) => {
   try {
     const { userId, description, date, duration } = req.body;
-		let newExercise = {
-			userId,
-			description,
-			date: date ? moment(date) : moment(),
-			duration:+duration,
-		}
+    let newExercise = {
+      userId,
+      description,
+      date: date ? moment(date) : moment(),
+      duration: +duration,
+    };
     let updatedUser = await User.findByIdAndUpdate(userId, {
       $push: {
         log: newExercise,
       },
-    }).select("-__v -log._id").lean()
-		
+    })
+      .select("-__v -log._id")
+      .lean();
+
     if (updatedUser) {
-			// updatedUser.find(where("log").elemMatch(function(elem){
-			// 	elem.where({description:`${description}`});
-			// }))
-			updatedUser = {...updatedUser,...updatedUser.log.filter(log => moment(newExercise.date).isSame(log.date)? log : null).map(l => {return{...l,date:moment(l.date).format("ddd MMM D YYYY")}})[0]};
-			// delete updatedUser.log._id
-			// updatedUser={...updatedUser,...updatedUser.log}
-			delete updatedUser.log
-			return res.status(200).json(updatedUser);
+      // updatedUser.find(where("log").elemMatch(function(elem){
+      // 	elem.where({description:`${description}`});
+      // }))
+      updatedUser = {
+        ...updatedUser,
+        ...updatedUser.log
+          .filter((log) =>
+            moment(newExercise.date).isSame(log.date) ? log : null
+          )
+          .map((l) => {
+            return { ...l, date: moment(l.date).format("ddd MMM D YYYY") };
+          })[0],
+      };
+      // delete updatedUser.log._id
+      // updatedUser={...updatedUser,...updatedUser.log}
+      delete updatedUser.log;
+      return res.status(200).json(updatedUser);
     } else {
       throw Error("User not found");
     }
@@ -91,12 +101,12 @@ app.post("/api/exercise/add", async (req, res) => {
 app.get("/api/exercise/log", async (req, res) => {
   // from to date in yyyy-mm-dd format and limit
   try {
-		let from 
-		let to 
-		let limit 
-    req.query.from ? from = moment(req.query.from).toDate() : from;
-   	req.query.to ?to = moment(req.query.to).toDate() : to;
-		req.query.limit ? limit = +req.query.limit:null
+    let from;
+    let to;
+    let limit;
+    req.query.from ? (from = moment(req.query.from).toDate()) : from;
+    req.query.to ? (to = moment(req.query.to).toDate()) : to;
+    req.query.limit ? (limit = +req.query.limit) : null;
     let foundUser = await User.aggregate([
       { $match: { _id: mongoose.Types.ObjectId(req.query.userId) } },
       {
@@ -106,8 +116,20 @@ app.get("/api/exercise/log", async (req, res) => {
               input: "$log",
               cond: {
                 $and: [
-                  {$cond:{if:from,then:{$gte: ["$$this.date", from]},else:true} },
-                  {$cond:{if:to,then:{$lte: ["$$this.date", to]},else:true} },
+                  {
+                    $cond: {
+                      if: from,
+                      then: { $gte: ["$$this.date", from] },
+                      else: true,
+                    },
+                  },
+                  {
+                    $cond: {
+                      if: to,
+                      then: { $lte: ["$$this.date", to] },
+                      else: true,
+                    },
+                  },
                 ],
               },
             },
@@ -119,29 +141,72 @@ app.get("/api/exercise/log", async (req, res) => {
                 as: "item",
                 cond: {
                   $and: [
-											{$cond:{if:from,then:{$gte: ["$$item.date", from]},else:true} },
-											{$cond:{if:to,then:{$lte: ["$$item.date", to]},else:true} },
-										],  
+                    {
+                      $cond: {
+                        if: from,
+                        then: { $gte: ["$$item.date", from] },
+                        else: true,
+                      },
+                    },
+                    {
+                      $cond: {
+                        if: to,
+                        then: { $lte: ["$$item.date", to] },
+                        else: true,
+                      },
+                    },
+                  ],
                 },
               },
             },
           },
         },
       },
-			{
-				$project:{
-					_id:1,
-					username:1,
-					from:{$cond:{if:req.query.from,then:moment(from).format("ddd MMM D YYYY"),else:'$$REMOVE'}},
-					to:{$cond:{if:req.query.to ,then:moment(to).format("ddd MMM D YYYY"),else:'$$REMOVE'}},
-					log:{$cond:{if:req.query.limit,then:{$slice:["$log",limit]},else:'$log'}},
-					count:{$size:{$cond:{if:req.query.limit,then:{$slice:["$log",limit]},else:'$log'}}}
-				}
-			}
+      {
+        $project: {
+          _id: 1,
+          username: 1,
+          from: {
+            $cond: {
+              if: req.query.from,
+              then: moment(from).format("ddd MMM D YYYY"),
+              else: "$$REMOVE",
+            },
+          },
+          to: {
+            $cond: {
+              if: req.query.to,
+              then: moment(to).format("ddd MMM D YYYY"),
+              else: "$$REMOVE",
+            },
+          },
+          log: {
+            $cond: {
+              if: req.query.limit,
+              then: { $slice: ["$log", limit] },
+              else: "$log",
+            },
+          },
+          count: {
+            $size: {
+              $cond: {
+                if: req.query.limit,
+                then: { $slice: ["$log", limit] },
+                else: "$log",
+              },
+            },
+          },
+        },
+      },
     ]);
 
     if (foundUser.length > 0) {
-			foundUser = {...foundUser[0],log:foundUser[0].log.map(log => {return {...log,date:moment(log.date).format("ddd MMM D YYYY")}})}
+      foundUser = {
+        ...foundUser[0],
+        log: foundUser[0].log.map((log) => {
+          return { ...log, date: moment(log.date).format("ddd MMM D YYYY") };
+        }),
+      };
       res.json(foundUser);
     } else {
       throw new Error("User not found");
