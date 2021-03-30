@@ -81,10 +81,14 @@ app.post("/api/exercise/add", async (req, res) => {
 app.get("/api/exercise/log", async (req, res) => {
   // from to date in yyyy-mm-dd format and limit
   try {
-		let from
+		let from 
 		let to 
-    req.query.from ? from = moment(req.query.from).toDate() : null;
-   	req.query.to ? to= moment(req.query.to).toDate():null;
+    req.query.from ? from = moment(req.query.from).toDate() : from;
+   	req.query.to ?to = moment(req.query.to).toDate() : to;
+		//  let from = req.query.from
+		//  let to = req.query.to
+		 console.log("From",from);
+		 console.log("from Date", moment(req.query.from));
     let foundUser = await User.aggregate([
       { $match: { _id: mongoose.Types.ObjectId(req.query.userId) } },
       {
@@ -94,8 +98,8 @@ app.get("/api/exercise/log", async (req, res) => {
               input: "$log",
               cond: {
                 $and: [
-                  { $gte: ["$$this.date", from] },
-                  { $lte: ["$$this.date", to] },
+                  {$cond:{if:from,then:{$gte: ["$$this.date", from]},else:true} },//$gte: ["$$this.date", from] 
+                  {$cond:{if:to,then:{$lte: ["$$this.date", to]},else:true} },//$lte: ["$$this.date", to]
                 ],
               },
             },
@@ -120,8 +124,8 @@ app.get("/api/exercise/log", async (req, res) => {
 				$project:{
 					_id:1,
 					username:1,
-					from:{$cond:{if:from,then:moment(from).format("ddd MMM D YYYY"),else:'$$REMOVE'}},
-					to:{$cond:{if:to,then:moment(from).format("ddd MMM D YYYY"),else:'$$REMOVE'}},
+					from:{$cond:{if:req.query.from,then:moment(from).format("ddd MMM D YYYY"),else:'$$REMOVE'}},
+					to:{$cond:{if:req.query.to ,then:moment(to).format("ddd MMM D YYYY"),else:'$$REMOVE'}},
 					log:1,
 					count:1
 				}
