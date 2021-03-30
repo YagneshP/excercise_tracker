@@ -5,6 +5,7 @@ require("dotenv").config();
 const mongoose = require("mongoose");
 const User = require("./models/user");
 const moment = require("moment");
+const user = require("./models/user");
 
 app.use(cors());
 app.use(express.static("public"));
@@ -46,7 +47,12 @@ app.post("/api/exercise/new-user", async (req, res) => {
 //GET getting all users
 app.get("/api/exercise/users", async (req, res) => {
   try {
-    let foundUsers = await User.find();
+    let foundUsers = await User.find().select("-__v").lean();
+		foundUsers = foundUsers.map(user => {
+			return {...user,log:user.log.map(log =>{
+				return {...log, date:moment(log.date).format("ddd MMM D YYYY") }
+			})}
+			})
     res.status(200).json(foundUsers);
   } catch (error) {
     res.json({ error: error.message });
@@ -66,7 +72,7 @@ app.post("/api/exercise/add", async (req, res) => {
           duration,
         },
       },
-    }).lean();
+    }).select("-__v").lean();
     if (updatedUser) {
 		updatedUser = {...updatedUser,log:updatedUser.log.map(log => {return {...log,date:moment(log.date).format("ddd MMM D YYYY")}})}
 		console.log(updatedUser)
