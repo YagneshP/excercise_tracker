@@ -5,7 +5,7 @@ require("dotenv").config();
 const mongoose = require("mongoose");
 const User = require("./models/user");
 const moment = require("moment");
-const user = require("./models/user");
+
 
 app.use(cors());
 app.use(express.static("public"));
