@@ -64,7 +64,7 @@ app.post("/api/exercise/add", async (req, res) => {
   try {
     const { userId, description, date, duration } = req.body;
 		let newExercise = {
-			userId,
+			_id:userId,
 			description,
 			date: date ? moment(date).format("ddd MMM D YYYY") : moment().format("ddd MMM D YYYY"),
 			duration:+duration,
@@ -75,7 +75,7 @@ app.post("/api/exercise/add", async (req, res) => {
       },
     }).select("-__v").lean();
     if (updatedUser) {
-			newExercise = {...newExercise,_id:updatedUser._id,username:updatedUser.username,date:moment(newExercise.date).format("ddd MMM D YYYY")}
+			newExercise = {...newExercise,username:updatedUser.username,date:moment(newExercise.date).format("ddd MMM D YYYY")}
 		// updatedUser = {...updatedUser,log:updatedUser.log.map(log => {return {...log,date:moment(log.date).format("ddd MMM D YYYY")}})}
 		console.log(newExercise)
 			return res.status(200).json(newExercise);
