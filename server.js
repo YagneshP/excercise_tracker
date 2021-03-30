@@ -57,7 +57,7 @@ app.get("/api/exercise/users", async (req, res) => {
 app.post("/api/exercise/add", async (req, res) => {
   try {
     const { userId, description, date, duration } = req.body;
-    let foundUser = await User.findByIdAndUpdate(userId, {
+    let updatedUser = await User.findByIdAndUpdate(userId, {
       $push: {
         log: {
           userId,
@@ -66,9 +66,11 @@ app.post("/api/exercise/add", async (req, res) => {
           duration,
         },
       },
-    });
-    if (foundUser) {
-      return res.status(200).json(foundUser);
+    }).lean();
+    if (updatedUser) {
+		updatedUser = {...updatedUser,log:updatedUser.log.map(log => {return {...log,date:moment(log.date).format("ddd MMM D YYYY")}})}
+		console.log(updatedUser)
+			return res.status(200).json(updatedUser);
     } else {
       throw Error("User not found");
     }
@@ -83,12 +85,10 @@ app.get("/api/exercise/log", async (req, res) => {
   try {
 		let from 
 		let to 
+		let limit 
     req.query.from ? from = moment(req.query.from).toDate() : from;
    	req.query.to ?to = moment(req.query.to).toDate() : to;
-		//  let from = req.query.from
-		//  let to = req.query.to
-		 console.log("From",from);
-		 console.log("from Date", moment(req.query.from));
+		req.query.limit ? limit = +req.query.limit:null
     let foundUser = await User.aggregate([
       { $match: { _id: mongoose.Types.ObjectId(req.query.userId) } },
       {
@@ -98,8 +98,8 @@ app.get("/api/exercise/log", async (req, res) => {
               input: "$log",
               cond: {
                 $and: [
-                  {$cond:{if:from,then:{$gte: ["$$this.date", from]},else:true} },//$gte: ["$$this.date", from] 
-                  {$cond:{if:to,then:{$lte: ["$$this.date", to]},else:true} },//$lte: ["$$this.date", to]
+                  {$cond:{if:from,then:{$gte: ["$$this.date", from]},else:true} },
+                  {$cond:{if:to,then:{$lte: ["$$this.date", to]},else:true} },
                 ],
               },
             },
@@ -111,9 +111,9 @@ app.get("/api/exercise/log", async (req, res) => {
                 as: "item",
                 cond: {
                   $and: [
-                    { $gte: ["$$item.date", from] },
-                    { $lte: ["$$item.date", to] },
-                  ],
+											{$cond:{if:from,then:{$gte: ["$$item.date", from]},else:true} },
+											{$cond:{if:to,then:{$lte: ["$$item.date", to]},else:true} },
+										],  
                 },
               },
             },
@@ -126,14 +126,15 @@ app.get("/api/exercise/log", async (req, res) => {
 					username:1,
 					from:{$cond:{if:req.query.from,then:moment(from).format("ddd MMM D YYYY"),else:'$$REMOVE'}},
 					to:{$cond:{if:req.query.to ,then:moment(to).format("ddd MMM D YYYY"),else:'$$REMOVE'}},
-					log:1,
-					count:1
+					log:{$cond:{if:req.query.limit,then:{$slice:["$log",limit]},else:'$log'}},
+					count:{$size:{$cond:{if:req.query.limit,then:{$slice:["$log",limit]},else:'$log'}}}
 				}
 			}
     ]);
 
     if (foundUser.length > 0) {
-      res.json(foundUser[0]);
+			foundUser = {...foundUser[0],log:foundUser[0].log.map(log => {return {...log,date:moment(log.date).format("ddd MMM D YYYY")}})}
+      res.json(foundUser);
     } else {
       throw new Error("User not found");
     }
