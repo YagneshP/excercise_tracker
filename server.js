@@ -68,15 +68,15 @@ app.post("/api/exercise/add", async (req, res) => {
       $push: {
         log: newExercise,
       },
-    }).select("-__v ").lean()
+    }).select("-__v -log._id").lean()
 		
     if (updatedUser) {
 			// updatedUser.find(where("log").elemMatch(function(elem){
 			// 	elem.where({description:`${description}`});
 			// }))
-			updatedUser = {...updatedUser,log:updatedUser.log.filter(log => moment(newExercise.date).isSame(log.date)? log : null)[0]};
-			delete updatedUser.log._id
-			updatedUser={...updatedUser,...updatedUser.log}
+			updatedUser = {...updatedUser,...updatedUser.log.filter(log => moment(newExercise.date).isSame(log.date)? log : null).map(l => {return{...l,date:moment(l.date).format("ddd MMM D YYYY")}})[0]};
+			// delete updatedUser.log._id
+			// updatedUser={...updatedUser,...updatedUser.log}
 			delete updatedUser.log
 			return res.status(200).json(updatedUser);
     } else {
