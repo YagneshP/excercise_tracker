@@ -63,20 +63,22 @@ app.get("/api/exercise/users", async (req, res) => {
 app.post("/api/exercise/add", async (req, res) => {
   try {
     const { userId, description, date, duration } = req.body;
+		let newExercise = {
+			userId,
+			description,
+			date: date ? moment(date).format("ddd MMM D YYYY") : moment().format("ddd MMM D YYYY"),
+			duration:+duration,
+		}
     let updatedUser = await User.findByIdAndUpdate(userId, {
       $push: {
-        log: {
-          userId,
-          description,
-          date: date ? moment(date) : moment(),
-          duration,
-        },
+        log: newExercise,
       },
     }).select("-__v").lean();
     if (updatedUser) {
-		updatedUser = {...updatedUser,log:updatedUser.log.map(log => {return {...log,date:moment(log.date).format("ddd MMM D YYYY")}})}
-		console.log(updatedUser)
-			return res.status(200).json(updatedUser);
+			// newExercise = {...newExercise,date:moment(newExercise.date).format("ddd MMM D YYYY")}
+		// updatedUser = {...updatedUser,log:updatedUser.log.map(log => {return {...log,date:moment(log.date).format("ddd MMM D YYYY")}})}
+		console.log(newExercise)
+			return res.status(200).json(newExercise);
     } else {
       throw Error("User not found");
     }
