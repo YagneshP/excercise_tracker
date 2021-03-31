@@ -82,7 +82,7 @@ app.post("/api/exercise/add", async (req, res) => {
             moment(newExercise.date).isSame(log.date) ? log : null
           )
           .map((l) => {
-            return { ...l, date: moment(l.date).format("ddd MMM D YYYY") };
+            return { ...l, date: moment(l.date).format("ddd MMM DD YYYY") };
           })[0],
       };
       // delete updatedUser.log._id
@@ -169,14 +169,14 @@ app.get("/api/exercise/log", async (req, res) => {
           from: {
             $cond: {
               if: req.query.from,
-              then: moment(from).format("ddd MMM D YYYY"),
+              then: moment(from).format("ddd MMM DD YYYY"),
               else: "$$REMOVE",
             },
           },
           to: {
             $cond: {
               if: req.query.to,
-              then: moment(to).format("ddd MMM D YYYY"),
+              then: moment(to).format("ddd MMM DD YYYY"),
               else: "$$REMOVE",
             },
           },
@@ -204,7 +204,7 @@ app.get("/api/exercise/log", async (req, res) => {
       foundUser = {
         ...foundUser[0],
         log: foundUser[0].log.map((log) => {
-          return { ...log, date: moment(log.date).format("ddd MMM D YYYY") };
+          return { ...log, date: moment(log.date).format("ddd MMM DD YYYY") };
         }),
       };
       res.json(foundUser);
